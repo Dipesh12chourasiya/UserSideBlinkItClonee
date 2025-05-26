@@ -12,7 +12,7 @@ import androidx.room.Update
 interface CartProductsDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertCartProduct(product: CartProducts)
+    suspend fun insertCartProduct(product: CartProducts)
 
     @Update
     fun updateCartProduct(product: CartProducts)
@@ -21,5 +21,9 @@ interface CartProductsDao {
     fun getAllCartProducts() : LiveData<List<CartProducts>>
                                                        // parameter of dCP function
     @Query("DELETE FROM CartProducts WHERE productId = :productId")
-    fun deleteCartProduct(productId: String)
+    suspend fun deleteCartProduct(productId: String)
+
+    @Query("DELETE FROM CartProducts")
+    suspend fun deleteAllCartProduts()
 }
+

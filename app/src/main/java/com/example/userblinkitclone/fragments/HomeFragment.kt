@@ -28,8 +28,15 @@ class HomeFragment : Fragment() {
 
         setAllCategories()
         navigateToSearchFragment()
+        onProfileClick()
 
         return binding.root
+    }
+
+    private fun onProfileClick() {
+        binding.ivProfile.setOnClickListener{
+            findNavController().navigate(R.id.action_homeFragment_to_profileFragment)
+        }
     }
 
     private fun onCategoryIconClicked(category: Catagory){

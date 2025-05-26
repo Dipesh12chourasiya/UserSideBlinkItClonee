@@ -6,6 +6,8 @@ import android.view.LayoutInflater
 import android.widget.Toast
 import com.example.userblinkitclone.databinding.ProgressDialogBinding
 import com.google.firebase.auth.FirebaseAuth
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 object Utils {
 
@@ -37,4 +39,16 @@ object Utils {
     fun getCurrentUserId() : String{
         return FirebaseAuth.getInstance().currentUser?.uid ?: "null"
     }
+
+    fun getRandId() : String {
+        return (1 .. 25).map{(('A'..'Z')+ ('a' .. 'z') + ('0' .. '9')).random()}.joinToString("")
+    }
+
+    fun getCurrentDate(): String? {
+        val currDate = LocalDate.now()
+        val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
+        return currDate.format(formatter)
+    }
+
+
 }

@@ -13,6 +13,9 @@
         android:theme="@style/Theme.UserBlinkitClone"
         tools:targetApi="31">
         <activity
+            android:name=".activity.SimulatedPaymentActivity"
+            android:exported="false" />
+        <activity
             android:name=".activity.OrderPlaceActivity"
             android:exported="false" />
         <activity

@@ -20,33 +20,38 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 
+
 class SplashFragment : Fragment() {
 
-    private val viewModel:AuthViewModel by viewModels()
+    private val viewModel: AuthViewModel by viewModels()
     private lateinit var binding: FragmentSplashBinding
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-
-        binding = FragmentSplashBinding.inflate(layoutInflater)
-
+    ): View {
+        binding = FragmentSplashBinding.inflate(inflater, container, false)
         requireActivity().window.statusBarColor = Color.TRANSPARENT
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         Handler(Looper.getMainLooper()).postDelayed({
+            // Use viewLifecycleOwner's lifecycleScope for safety
+            viewLifecycleOwner.lifecycleScope.launch {
+                viewModel.isACurrentUser.collect { isUserLoggedIn ->
+                    if (!isAdded) return@collect // prevent navigating from detached fragment
 
-            lifecycleScope.launch {
-                viewModel.isACurrentUser.collect{
-                    if(it == true){
+                    if (isUserLoggedIn) {
                         startActivity(Intent(requireActivity(), UsersMainActivity::class.java))
                         requireActivity().finish()
-                    } else{
+                    } else {
                         findNavController().navigate(R.id.action_splashFragment_to_signinFragment)
                     }
                 }
             }
         }, 2000)
-
-        return binding.root;
     }
 }
