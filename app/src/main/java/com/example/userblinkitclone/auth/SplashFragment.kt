@@ -16,6 +16,7 @@ import com.example.userblinkitclone.R
 import com.example.userblinkitclone.activity.UsersMainActivity
 import com.example.userblinkitclone.databinding.FragmentSplashBinding
 import com.example.userblinkitclone.viewmodels.AuthViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
@@ -38,20 +39,23 @@ class SplashFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        Handler(Looper.getMainLooper()).postDelayed({
-            // Use viewLifecycleOwner's lifecycleScope for safety
-            viewLifecycleOwner.lifecycleScope.launch {
-                viewModel.isACurrentUser.collect { isUserLoggedIn ->
-                    if (!isAdded) return@collect // prevent navigating from detached fragment
+        viewLifecycleOwner.lifecycleScope.launch {
+            delay(2000) // safe coroutine-based delay
 
-                    if (isUserLoggedIn) {
-                        startActivity(Intent(requireActivity(), UsersMainActivity::class.java))
-                        requireActivity().finish()
-                    } else {
-                        findNavController().navigate(R.id.action_splashFragment_to_signinFragment)
-                    }
+            // Check if fragment is still added before doing anything
+            if (!isAdded) return@launch
+
+            viewModel.isACurrentUser.collect { isUserLoggedIn ->
+                if (!isAdded) return@collect
+
+                if (isUserLoggedIn) {
+                    startActivity(Intent(requireActivity(), UsersMainActivity::class.java))
+                    requireActivity().finish()
+                } else {
+                    findNavController().navigate(R.id.action_splashFragment_to_signinFragment)
                 }
             }
-        }, 2000)
+        }
     }
+
 }

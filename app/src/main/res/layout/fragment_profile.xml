@@ -142,6 +142,7 @@
                 android:src="@drawable/baseline_logout_24" />
 
             <TextView
+                android:id="@+id/tvLogout"
                 android:layout_width="0dp"
                 android:layout_weight="0.9"
                 android:layout_height="wrap_content"

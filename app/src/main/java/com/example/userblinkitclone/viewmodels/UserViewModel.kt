@@ -3,12 +3,14 @@ package com.example.userblinkitclone.viewmodels
 import android.app.Application
 import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.example.userblinkitclone.Constants
 import com.example.userblinkitclone.Utils
 import com.example.userblinkitclone.api.ApiUtilities
+import com.example.userblinkitclone.models.Bestseller
 import com.example.userblinkitclone.models.Order
 import com.example.userblinkitclone.models.OrderdItem
 import com.example.userblinkitclone.models.Product
@@ -16,6 +18,7 @@ import com.example.userblinkitclone.models.Users
 import com.example.userblinkitclone.roomDB.CartProducts
 import com.example.userblinkitclone.roomDB.CartProductsDao
 import com.example.userblinkitclone.roomDB.CartProductsDatabse
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -137,6 +140,24 @@ class UserViewModel(application: Application): AndroidViewModel(application) {
         awaitClose{db.removeEventListener(eventListner)}
     }
 
+    fun getOrderedProducts(orderId: String) : Flow<List<CartProducts>> = callbackFlow{
+        val db = FirebaseDatabase.getInstance().getReference("Admins").child("Orders").child(orderId)
+
+        val eventListener = object : ValueEventListener{
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val order = snapshot.getValue(Order::class.java)
+                trySend(order?.orderList!!)
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+            }
+
+        }
+
+        db.addValueEventListener(eventListener)
+        awaitClose { db.removeEventListener(eventListener) }
+    }
+
     fun updateItemCount(product: Product, itemCount: Int){
         FirebaseDatabase.getInstance().getReference("Admins").child("AllProducts/${product.productRandomId}").child("itemCount").setValue(itemCount)
         FirebaseDatabase.getInstance().getReference("Admins").child("ProductCategory/${product.productCategory}/${product.productRandomId}").child("itemCount").setValue(itemCount)
@@ -157,7 +178,7 @@ class UserViewModel(application: Application): AndroidViewModel(application) {
         FirebaseDatabase.getInstance().getReference("AllUsers").child("Users").child(Utils.getCurrentUserId()).child("userAddress").setValue(address)
     }
 
-    fun getUserAddress(callback: (String?) -> Unit){
+    fun getUserAddress(callback: (String?) -> Unit){ // getting user addresss
 
         val db = FirebaseDatabase.getInstance().getReference("AllUsers").child("Users").child(Utils.getCurrentUserId()).child("userAddress")
 
@@ -177,11 +198,90 @@ class UserViewModel(application: Application): AndroidViewModel(application) {
         })
     }
 
+
     fun saveOrderedProduct(order: Order){
         FirebaseDatabase.getInstance().getReference("Admins").child("Orders").child(order.orderId!!).setValue(order)
     }
 
 
+//    fun fetchProductTypes(): Flow<List<Bestseller>> = callbackFlow {
+//        val db = FirebaseDatabase.getInstance().getReference("Admins/ProductType")
+//
+//        val eventListener = object : ValueEventListener{
+//            override fun onDataChange(snapshot: DataSnapshot) {
+//                val productTypeList = ArrayList<Bestseller>()
+//
+//                for(productType in snapshot.children){
+//                    val productTypeName = productType.key
+//
+//                    val productList = ArrayList<Product>()
+//
+//                    for(prodcts in productType.children){
+//                        val product = prodcts.getValue(Product::class.java)
+//                        productList.add(product!!)
+//                    }
+//
+//                    val bestseller = Bestseller(productType = productTypeName, products = productList)
+//
+//                    productTypeList.add(bestseller)
+//                }
+//
+//                trySend(productTypeList)
+//            }
+//
+//            override fun onCancelled(error: DatabaseError) {
+//                Log.e("Firebase", "Database error: ${error.message}")
+//            }
+//
+//        }
+//
+//        db.addValueEventListener(eventListener)
+//        awaitClose{db.removeEventListener(eventListener)}
+//    }
+
+    fun fetchProductTypes(): Flow<List<Bestseller>> = callbackFlow {
+        val db = FirebaseDatabase.getInstance().getReference("Admins/ProductType")
+
+        val eventListener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val productTypeList = ArrayList<Bestseller>()
+
+                for (productType in snapshot.children) {
+                    val productTypeName = productType.key
+                    val productList = ArrayList<Product>()
+
+                    for (productSnapshot in productType.children) {
+                        val product = productSnapshot.getValue(Product::class.java)
+                        product?.let { productList.add(it) } // safely add only non-null products
+                    }
+
+                    val bestseller = Bestseller(
+                        productType = productTypeName,
+                        products = productList
+                    )
+                    productTypeList.add(bestseller)
+                }
+
+                trySend(productTypeList).isSuccess // send result to Flow
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("Firebase", "Database error: ${error.message}")
+                close(error.toException()) // closes the flow with the error
+            }
+        }
+
+        db.addValueEventListener(eventListener)
+
+        // This ensures the listener is removed when the flow collector is cancelled
+        awaitClose {
+            db.removeEventListener(eventListener)
+        }
+    }
+
+    fun logoutUser(){ // to lgoout the user
+        FirebaseAuth.getInstance().signOut()
+    }
 
 
 

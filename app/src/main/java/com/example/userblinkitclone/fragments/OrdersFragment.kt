@@ -81,7 +81,11 @@ class OrdersFragment : Fragment() {
     }
 
     fun onOrderItemViewClicked(orderedItem: OrderdItem){
+        val bundle = Bundle()
+        bundle.putInt("status", orderedItem.itemStatus!!)
+        bundle.putString("orderId", orderedItem.orderId!!)
 
+        findNavController().navigate(R.id.action_ordersFragment_to_orderDetailsFragment, bundle)
     }
 
 }
